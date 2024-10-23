@@ -4,171 +4,180 @@
 # include <math.h>
 # include "symnmf.h"
 
-static int N, vecdim;
+static int N, vecdim, k;
 
-double** convert_matrix(PyObject* self, PyObject* args)
+double** convert_pylist2carray(PyObject* obj, double** arr, int n, int m)
+{
+    int i,j;
+    PyObject* row;
+    for (i=0;i<n;i++)
+    {
+        row = PyList_GetItem(obj, i);
+        for (j=0;j<m;j++)
+        {
+            arr[i][j] = PyFloat_AsDouble(PyList_GetItem(row, j));
+        }
+    }
+    return arr;
+}
+
+PyObject* convert_carray2pylist(double** received_matrix, int n, int m)
+{
+    int i,j;
+    PyObject* final_matrix = PyList_New(n);
+    PyObject* final_row;
+    for (i=0;i<n;i++)
+    {
+        final_row = PyList_New(m);
+        for (j=0;j<m;j++)
+        {
+            PyList_SetItem(final_row, j, PyFloat_FromDouble(received_matrix[i][j]));
+        }
+        PyList_SetItem(final_matrix, i, final_row);
+    }
+
+    return final_matrix;
+}
+
+double** convert_vectors(PyObject* self, PyObject* args)
 {
     PyObject* vec_arr_obj;
     double** vec_arr;
     
-    /* This parses the Python arguments into:
-        1. int (i) variables named k,N,vecdim,iter
-        2. double (d) variable named eps
-        3. A pointer to a pointer to a double (O) variable named vec_arr */
-    if(!PyArg_ParseTuple(args, "Oii", &vec_arr_obj, &N, &vecdim))
-    {
-        return NULL; /* In the CPython API, a NULL value is never valid for a
-                        PyObject* so it is used to signal that an error has occurred. */
-    }
+    /* Parse Python argument: */
+    if(!PyArg_ParseTuple(args, "O", &vec_arr_obj)) return NULL; /* In the CPython API, a NULL value is never valid for a
+                                                                    PyObject* so it is used to signal that an error has occurred. */
 
-    // Allocate memory for C arrays and check if allocation failed
-    vec_arr = malloc(N*sizeof(double*));
-    if (vec_arr == NULL)
-    {
-        PyErr_SetString(PyExc_MemoryError, "Memory allocation failed");
-        free(vec_arr);
-        return NULL;
-    }
-    
-    int i,j;
-    /* Allocate memory for each vector in vec_arr */
-    for (i=0;i<N;i++)
-    {
-        vec_arr[i] = malloc(vecdim*sizeof(double));
-        if (vec_arr[i] == NULL)
-        {
-            PyErr_SetString(PyExc_MemoryError, "Memory allocation failed");
-            for (j=0;j<i;j++)
-            {
-                free(vec_arr[j]);
-            }
-            free(vec_arr);
-            return NULL;
-        }
-    }
+    /* Get N and vecdim from the python object */
+    N = PyList_Size(vec_arr_obj);
+    vecdim = PyList_Size(PyList_GetItem(vec_arr_obj, 0));
 
-    /* Convert python lists into C arrays */
-    PyObject* vec;
-    for (i=0;i<N;i++)
-    {
-        vec = PyList_GetItem(vec_arr_obj, i);
-        for (j=0;j<vecdim;j++)
-        {
-            vec_arr[i][j] = PyFloat_AsDouble(PyList_GetItem(vec,j));
-        }
-    }
+    /* Allocate memory for C array */
+    if((vec_arr = matrix_malloc(vec_arr, N, vecdim)) == NULL) return NULL; /* Memory allocation failed */
+
+    /* Convert python list into C array */
+    vec_arr = convert_pylist2carray(vec_arr_obj, vec_arr, N, vecdim);
     return vec_arr;
 }
 
 static PyObject* symmodule(PyObject* self, PyObject* args)
 {
-    int i,j;
-    double** vectors_matrix = convert_matrix(self, args);
+    double** vectors_matrix = convert_vectors(self, args);
+    if(vectors_matrix == NULL) return NULL; /* Failure occured */
+    
     double** sym_matrix = sym(vectors_matrix, N, vecdim);
+    if(sym_matrix == NULL) /* Memory allocation failed */
+    {
+        matrix_free(vectors_matrix, N);
+        return NULL;
+    }
 
     /* Convert our C double** to a python list of lists */
-    PyObject* final_sym = PyList_New(N);
-    PyObject* final_row;
-    for (i=0;i<N;i++)
-    {
-        final_row = PyList_New(N);
-        for (j=0;j<N;j++)
-        {
-            PyList_SetItem(final_row, j, PyFloat_FromDouble(sym_matrix[i][j]));
-        }
-        PyList_SetItem(final_sym, i, final_row);
-    }
+    PyObject* final_sym = convert_carray2pylist(sym_matrix, N, N);
 
     /* Free all allocated memory */
-    for (i=0;i<N;i++)
-    {
-        free(vectors_matrix[i]);
-    }
-    free(vectors_matrix); 
-
-    for (i=0;i<N;i++)
-    {
-        free(sym_matrix[i]);
-    }
-    free(sym_matrix);
+    matrix_free(vectors_matrix, N);
+    matrix_free(sym_matrix, N);
 
     return Py_BuildValue("O", final_sym);
 }
 
 static PyObject* ddgmodule(PyObject* self, PyObject* args)
 {
-    int i,j;
-    double** vectors_matrix = convert_matrix(self, args);
+    double** vectors_matrix = convert_vectors(self, args);
+    if(vectors_matrix == NULL) return NULL; /* Failure occured */
+
     double** ddg_matrix = ddg(vectors_matrix, N, vecdim);
+    if(ddg_matrix == NULL) /* Memory allocation failed */
+    {
+        matrix_free(vectors_matrix, N);
+        return NULL;
+    }
 
     /* Convert our C double** to a python list of lists */
-    PyObject* final_ddg = PyList_New(N);
-    PyObject* final_row;
-    for (i=0;i<N;i++)
-    {
-        final_row = PyList_New(N);
-        for (j=0;j<N;j++)
-        {
-            PyList_SetItem(final_row, j, PyFloat_FromDouble(ddg_matrix[i][j]));
-        }
-        PyList_SetItem(final_ddg, i, final_row);
-    }
+    PyObject* final_ddg = convert_carray2pylist(ddg_matrix, N, N);
 
     /* Free all allocated memory */
-    for (i=0;i<N;i++)
-    {
-        free(vectors_matrix[i]);
-    }
-    free(vectors_matrix); 
-
-    for (i=0;i<N;i++)
-    {
-        free(ddg_matrix[i]);
-    }
-    free(ddg_matrix);
+    matrix_free(vectors_matrix, N);
+    matrix_free(ddg_matrix, N);
 
     return Py_BuildValue("O", final_ddg);
 }
 
 static PyObject* normmodule(PyObject* self, PyObject* args)
 {
-    int i,j;
-    double** vectors_matrix = convert_matrix(self, args);
+    double** vectors_matrix = convert_vectors(self, args);
+    if(vectors_matrix == NULL) return NULL; /* Failure occured */
+
     double** norm_matrix = norm(vectors_matrix, N, vecdim);
+    if(norm_matrix == NULL) /* Memory allocation failed */
+    {
+        matrix_free(vectors_matrix, N);
+        return NULL;
+    }
 
     /* Convert our C double** to a python list of lists */
-    PyObject* final_norm = PyList_New(N);
-    PyObject* final_row;
-    for (i=0;i<N;i++)
-    {
-        final_row = PyList_New(N);
-        for (j=0;j<N;j++)
-        {
-            PyList_SetItem(final_row, j, PyFloat_FromDouble(norm_matrix[i][j]));
-        }
-        PyList_SetItem(final_norm, i, final_row);
-    }
+    PyObject* final_norm = convert_carray2pylist(norm_matrix, N, N);
 
     /* Free all allocated memory */
-    for (i=0;i<N;i++)
-    {
-        free(vectors_matrix[i]);
-    }
-    free(vectors_matrix); 
-
-    for (i=0;i<N;i++)
-    {
-        free(norm_matrix[i]);
-    }
-    free(norm_matrix);
+    matrix_free(vectors_matrix, N);
+    matrix_free(norm_matrix, N);
 
     return Py_BuildValue("O", final_norm);
 }
 
-static PyObject* symnmfmodule(PyObject* self, PyObject* args)
+double** convert_symnmf(PyObject* self, PyObject* args)
 {
-    int* final_nmf = NULL;
-    return Py_BuildValue("O", final_nmf);;
+    PyObject* w_mat_obj;
+    PyObject* h_mat_obj;
+    double** w_mat;
+    double** h_mat;
+    int iter;
+    double eps;
+    
+    /* Parse Python arguments: */
+    if(!PyArg_ParseTuple(args, "OOiid", &w_mat_obj, &h_mat_obj, &k, &iter, &eps)) return NULL; /* In the CPython API, a NULL value is never valid for a
+                                                                                                    PyObject* so it is used to signal that an error has occurred. */
+    
+    /* Get N and vecdim from the python object */
+    N = PyList_Size(w_mat_obj);
+
+    /* Allocate memory for C arrays and check if allocation failed */
+    if((w_mat = matrix_malloc(w_mat, N, N)) == NULL) return NULL; /* Memory allocation failed */
+    if((h_mat = matrix_malloc(h_mat, N, k)) == NULL) /* Memory allocation failed */
+    {
+        matrix_free(w_mat, N);
+        return NULL;
+    }
+
+    /* Convert python lists into C arrays */
+    w_mat = convert_pylist2carray(w_mat_obj, w_mat, N, N);
+    h_mat = convert_pylist2carray(h_mat_obj, h_mat, N, k);
+
+    /* Call the symnmf function */
+    double** final_h = symnmf(w_mat, h_mat, N, k, iter, eps);
+    if(final_h == NULL) /* Memory allocation failed*/
+    {
+        matrix_free(w_mat, N);
+        matrix_free(h_mat, N);
+        return NULL;
+    }
+
+    /* Free all allocated memory */
+    matrix_free(w_mat, N);
+    matrix_free(h_mat, N);
+
+    return final_h;
+}
+
+static PyObject* symnmfmodule(PyObject* self, PyObject* args)
+{    
+    double** h_matrix = convert_symnmf(self, args);
+    if(h_matrix == NULL) return NULL; /* Failure occured */
+
+    PyObject* final_h = convert_carray2pylist(h_matrix, N, k);
+
+    return Py_BuildValue("O", final_h);;
 }
 
 static PyMethodDef symnmfMethods[] = {
