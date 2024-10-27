@@ -136,7 +136,7 @@ double** convert_symnmf(PyObject* self, PyObject* args)
     double eps;
     
     /* Parse Python arguments: */
-    if(!PyArg_ParseTuple(args, "OOiid", &w_mat_obj, &h_mat_obj, &k, &iter, &eps)) return NULL; /* In the CPython API, a NULL value is never valid for a
+    if(!PyArg_ParseTuple(args, "OOi", &w_mat_obj, &h_mat_obj, &k)) return NULL; /* In the CPython API, a NULL value is never valid for a
                                                                                                     PyObject* so it is used to signal that an error has occurred. */
     
     /* Get N and vecdim from the python object */
@@ -155,7 +155,7 @@ double** convert_symnmf(PyObject* self, PyObject* args)
     h_mat = convert_pylist2carray(h_mat_obj, h_mat, N, k);
 
     /* Call the symnmf function */
-    double** final_h = symnmf(w_mat, h_mat, N, k, iter, eps);
+    double** final_h = symnmf(w_mat, h_mat, N, k);
     if(final_h == NULL) /* Memory allocation failed*/
     {
         matrix_free(w_mat, N);

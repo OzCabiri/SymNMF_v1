@@ -6,28 +6,26 @@ import mysymnmfsp as SymNMF
 
 np.random.seed(1234)
 
-def initialize_H(w_mat, N, k):
-    # Calculate the average of all entries in w_mat
-    m = np.mean(w_mat)
-
-    # Calculate the upper bound for the random values
-    upper_bound = 2 * np.sqrt(m / k)
-    
-    # Initialize H with random values from the interval [0, upper_bound]
-    H = np.random.uniform(low=0, high=upper_bound, size=(N, k))
-    
+def initializeH(w_mat, N, k):
+    m = np.mean(w_mat) # Calculate the average of all entries in w_mat
+    upper_bound = 2 * np.sqrt(m / k) # Calculate the upper bound for the random values
+    H = np.random.uniform(low=0, high=upper_bound, size=(N, k)) # Initialize H with random values from the interval [0, upper_bound]
     return H.tolist()
+
+def doSymnmf(vectors, k):
+    w_mat = SymNMF.norm(vectors) # Calling norm function in C to calculate W matrix
+    h_mat = initializeH(w_mat, len(vectors), k) # Initialize H matrix
+    matrix_goal = SymNMF.symnmf(w_mat, h_mat, k) # Calling symnmf function in C to calculate the matrix
+    return matrix_goal
 
 def main():
     try:
         # Get data from console
         input_data = sys.argv
         k, goal, input_file = int(input_data[1]), input_data[2], input_data[3]
-        iter, eps = 300, 0.0001
 
-        # Create Vectors dataframe from csv and save dimension and number of vectors
+        # Create Vectors dataframe from csv file
         vectors = pd.read_csv(input_file, header=None)
-        N = int(len(vectors))
         # Convert vectors to python list of lists
         vectors = vectors.values.tolist()
         
@@ -42,9 +40,7 @@ def main():
             case "norm":
                 matrix_goal = SymNMF.norm(vectors) # Calling norm function in C to calculate the matrix
             case "symnmf":
-                w_mat = SymNMF.norm(vectors) # Calling norm function in C to calculate W matrix
-                h_mat = initialize_H(w_mat, N, k) # Initialize H matrix
-                matrix_goal = SymNMF.symnmf(w_mat, h_mat, k, iter, eps) # Calling symnmf function in C to calculate the matrix
+                matrix_goal = doSymnmf(vectors, k)
             case _:
                 print("An Error Has Occurred")
                 return
@@ -59,6 +55,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# TODO:
-# - Implement API for symnmf

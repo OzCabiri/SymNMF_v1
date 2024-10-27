@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
+#define MAX_LINE_LENGTH 1024  /* Define max line length for buffer */
+
+static int N_c, vecdim_c;
 
 void print_matrix(double** matrix, int n, int m)
 {
@@ -10,13 +14,16 @@ void print_matrix(double** matrix, int n, int m)
         for(j=0;j<m;j++)
         {
             printf("%.4f ", matrix[i][j]);
-            (j!=m-1) ? printf(",") : printf("");
+            if(j != m-1)
+            {
+                printf(",");
+            }
         }
         printf("\n");
     }
 }   
 
-void matrix_free(double **p, int n)
+void matrix_free(double** p, int n)
 {
     int i;
     for(i=0;i<n;i++)
@@ -51,7 +58,7 @@ double** matrix_multiplication(double** matrix1, double** matrix2, int n, int m,
 {
     int i,j,k;
     double sum;
-    double** result_matrix;
+    double** result_matrix = NULL;
     
     if((result_matrix = matrix_malloc(result_matrix, n, p)) == NULL) return NULL; /* Memory allocation failed */
 
@@ -73,7 +80,7 @@ double** matrix_multiplication(double** matrix1, double** matrix2, int n, int m,
 double** matrix_transpose(double** matrix, int n, int m)
 {
     int i,j;
-    double** transposed_matrix;
+    double** transposed_matrix = NULL;
     
     if((transposed_matrix = matrix_malloc(transposed_matrix, m, n)) == NULL) return NULL; /* Memory allocation failed */
 
@@ -86,6 +93,24 @@ double** matrix_transpose(double** matrix, int n, int m)
     }
 
     return transposed_matrix;
+}
+
+double** matrix_substraction(double** matrix1, double** matrix2, int n, int m)
+{
+    int i,j;
+    double** result_matrix = NULL;
+    
+    if((result_matrix = matrix_malloc(result_matrix, n, m)) == NULL) return NULL; /* Memory allocation failed */
+
+    for(i=0;i<n;i++)
+    {
+        for(j=0;j<m;j++)
+        {
+            result_matrix[i][j] = matrix1[i][j] - matrix2[i][j];
+        }
+    }
+
+    return result_matrix;
 }
 
 void update_new_H(double** new_H,double** H, double** nom_matrix, double** denom_matrix, int N, int k)
@@ -113,7 +138,7 @@ void advance_H(double** H, double** new_H, int N, int k)
     }
 }
 
-double matrix_convergence(double** matrix1, double** matrix2, int n, int m)
+double forbius_norm(double** matrix, int n, int m, int is_squared)
 {
     int i,j;
     double sum = 0;
@@ -121,10 +146,19 @@ double matrix_convergence(double** matrix1, double** matrix2, int n, int m)
     {
         for(j=0;j<m;j++)
         {
-            sum += pow((matrix1[i][j] - matrix2[i][j]), 2);
+            sum += pow(matrix[i][j], 2);
         }
     }
-    return sqrt(sum);
+    return (is_squared == 0) ? sqrt(sum) : sum;
+}
+
+double matrix_convergence(double** matrix1, double** matrix2, int n, int m)
+{
+    double** result_matrix = matrix_substraction(matrix1, matrix2, n, m);
+    double norm = forbius_norm(result_matrix, n, m, 1);
+    matrix_free(result_matrix, n);
+    
+    return norm;
 }
 
 double euclidean_distance(double* vec1, double* vec2, int vecdim, int is_squared)
@@ -142,7 +176,7 @@ double** sym(double** vectors, int N, int vecdim)
 {
     int i,j;
     double value;
-    double** sym_matrix;
+    double** sym_matrix = NULL;
 
     /* malloc a matrix of doubles sized N*N */
     if((sym_matrix = matrix_malloc(sym_matrix, N, N)) == NULL) return NULL; /* Memory allocation failed */
@@ -174,8 +208,8 @@ double** ddg(double** vectors, int N, int vecdim)
 {
     int i,j;
     double sum;
-    double** sym_matrix;
-    double** ddg_matrix;
+    double** sym_matrix = NULL;
+    double** ddg_matrix = NULL;
 
     /* calculate sym and malloc a matrix of doubles sized N*n */
     if((sym_matrix = sym(vectors, N, vecdim)) == NULL) return NULL;  /* Memory allocation failed */
@@ -213,9 +247,9 @@ double** ddg(double** vectors, int N, int vecdim)
 double** norm(double** vectors, int N, int vecdim)
 {
     int i,j;
-    double** sym_matrix;
-    double** ddg_matrix;
-    double** norm_matrix;
+    double** sym_matrix = NULL;
+    double** ddg_matrix = NULL;
+    double** norm_matrix = NULL;
 
     /* malloc a matrix of doubles sized N on vecdim */
     if((sym_matrix = sym(vectors, N, vecdim)) == NULL) return NULL; /* Memory allocation failed */
@@ -247,14 +281,16 @@ double** norm(double** vectors, int N, int vecdim)
     return norm_matrix;
 }
 
-double** symnmf(double** W, double** H, int N, int k, int iter, double eps)
+double** symnmf(double** W, double** H, int N, int k)
 {
-    int i,j,l;
-    double** new_H;
+    int i;
+    double** new_H = NULL;
+    int iter = 300;
+    double eps = 0.0001;
     new_H = matrix_malloc(new_H, N, k);
     if(new_H == NULL) return NULL; /* Memory allocation failed */
 
-    for(l=0;l<iter;l++)
+    for(i=0;i<iter;i++)
     {
         /* calculate the numerator and denominator matrices */
         double** nom_matrix;
@@ -305,7 +341,96 @@ double** symnmf(double** W, double** H, int N, int k, int iter, double eps)
     return new_H;
 }
 
-/* TODO:
-        - Implement data recieval from input
-        - Implement matrix output
-*/
+double** read_vectors_from_file(const char *filename)
+{
+    char line[MAX_LINE_LENGTH];
+    char* token;
+    int i,j;
+    int row_count = 0;
+    int col_count = 0;
+    double** matrix = NULL;
+
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        perror("Error opening file");
+        return NULL;
+    }
+
+    /* First pass to determine the number of rows and columns */
+    while (fgets(line, sizeof(line), file)) {
+        row_count++;
+
+        /* Count columns in the first row */
+        if (row_count == 1) {
+            char* temp = strdup(line);  /* Duplicate line for counting columns */
+            char* token = strtok(temp, ",");
+            while (token != NULL) {
+                col_count++;
+                token = strtok(NULL, ",");
+            }
+            free(temp);
+        }
+    }
+    N_c = row_count;
+    vecdim_c = col_count;
+
+    /* Allocate memory for the 2D matrix */
+    matrix = matrix_malloc(matrix, N_c, vecdim_c);
+
+    /* Reset file pointer to beginning and read values into matrix */
+    rewind(file);
+    i = 0;
+    while (fgets(line, sizeof(line), file)) {
+        j = 0;
+        token = strtok(line, ",");
+        while (token != NULL) {
+            matrix[i][j++] = atof(token);  /* Convert token to double and store in matrix */
+            token = strtok(NULL, ",");
+        }
+        i++;
+    }
+
+    fclose(file);
+   
+    return matrix;
+}
+
+
+int main(int argc, char* argv[])
+{
+    double** vectors;
+    double** goal_matrix;
+
+    const char* goal = strdup(argv[1]);
+    const char* filename = strdup(argv[2]);
+
+    (void)argc;
+
+    vectors = read_vectors_from_file(filename);
+    if(vectors == NULL) return 1;
+    
+    if(!strcmp(goal,"sym"))
+    {
+        goal_matrix = sym(vectors, N_c, vecdim_c);
+        print_matrix(goal_matrix, N_c, N_c);
+        matrix_free(goal_matrix, N_c);
+        matrix_free(vectors, N_c);
+    }
+    else if(!strcmp(goal,"ddg"))
+    {
+        double** goal_matrix = ddg(vectors, N_c, vecdim_c);
+        print_matrix(goal_matrix, N_c, N_c);
+        matrix_free(goal_matrix, N_c);
+        matrix_free(vectors, N_c);
+    }
+    else if(!strcmp(goal,"norm"))
+    {
+        double** goal_matrix = norm(vectors, N_c, vecdim_c);
+        print_matrix(goal_matrix, N_c, N_c);
+        matrix_free(goal_matrix, N_c);
+        matrix_free(vectors, N_c);
+    }
+    
+    return 0;
+}
+
