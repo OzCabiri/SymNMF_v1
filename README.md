@@ -129,9 +129,9 @@ _For more examples, please refer to the [Documentation](https://github.com/OzCab
 
 ## Collaborators
 
-This project was written by [Oz Cabiri]("https://github.com/OzCabiri") and [Assaf Yaron]("https://github.com/assafyaron").<br/>
+This project was written by [Oz Cabiri](https://github.com/OzCabiri) and [Assaf Yaron](https://github.com/assafyaron).<br/>
 We are students so we are open to any criticism you might have so we can improve.
 
-You can also contact us on LinkedIn: [Oz Cabiri]("https://linkedin.com/in/oz-cabiri"), [Assaf Yaron]("https://www.linkedin.com/in/assafyaron/")
+You can also contact us on LinkedIn: [Oz Cabiri](https://linkedin.com/in/oz-cabiri), [Assaf Yaron](https://www.linkedin.com/in/assafyaron/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
