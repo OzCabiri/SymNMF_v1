@@ -6,6 +6,20 @@
 
 static int N, vecdim, k;
 
+/**
+ * Convert a Python list of lists to a C array.
+ *
+ * This function takes a Python list of lists (obj) and converts it into a C array (arr).
+ * The dimensions of the array are specified by n (number of rows) and m (number of columns).
+ * Each element in the Python list is converted to a double and stored in the corresponding
+ * position in the C array.
+ *
+ * @param obj A PyObject representing a Python list of lists.
+ * @param arr A double pointer representing the C array to be filled.
+ * @param n An integer representing the number of rows in the array.
+ * @param m An integer representing the number of columns in the array.
+ * @return A double pointer representing the filled C array.
+ */
 double** convert_pylist2carray(PyObject* obj, double** arr, int n, int m)
 {
     int i,j;
@@ -21,6 +35,19 @@ double** convert_pylist2carray(PyObject* obj, double** arr, int n, int m)
     return arr;
 }
 
+/**
+ * Convert a C array to a Python list of lists.
+ *
+ * This function takes a C array (received_matrix) and converts it into a Python list of lists.
+ * The dimensions of the array are specified by n (number of rows) and m (number of columns).
+ * Each element in the C array is converted to a Python float and stored in the corresponding
+ * position in the Python list.
+ *
+ * @param received_matrix A double pointer representing the C array to be converted.
+ * @param n An integer representing the number of rows in the array.
+ * @param m An integer representing the number of columns in the array.
+ * @return A PyObject representing the Python list of lists.
+ */
 PyObject* convert_carray2pylist(double** received_matrix, int n, int m)
 {
     int i,j;
@@ -39,6 +66,18 @@ PyObject* convert_carray2pylist(double** received_matrix, int n, int m)
     return final_matrix;
 }
 
+/**
+ * Convert a Python list of vectors to a C array.
+ *
+ * This function takes a Python list of vectors (vec_arr_obj) and converts it into a C array (vec_arr).
+ * It first parses the Python argument to get the list of vectors, then determines the dimensions
+ * of the array (N and vecdim). It allocates memory for the C array and converts the Python list
+ * into the C array.
+ *
+ * @param self A PyObject representing the module or class (not used).
+ * @param args A PyObject representing the arguments passed to the function.
+ * @return A double pointer representing the C array of vectors, or NULL if an error occurs.
+ */
 double** convert_vectors(PyObject* self, PyObject* args)
 {
     PyObject* vec_arr_obj;
@@ -60,6 +99,17 @@ double** convert_vectors(PyObject* self, PyObject* args)
     return vec_arr;
 }
 
+/**
+ * Perform Symmetric Non-negative Matrix Factorization (SymNMF) on the given vectors.
+ *
+ * This function takes a Python list of vectors, converts it to a C array, performs SymNMF,
+ * and returns the resulting matrix as a Python list of lists. It handles memory allocation
+ * and deallocation for the C arrays.
+ *
+ * @param self A PyObject representing the module or class (not used).
+ * @param args A PyObject representing the arguments passed to the function.
+ * @return A PyObject representing the resulting matrix as a Python list of lists, or NULL if an error occurs.
+ */
 static PyObject* symmodule(PyObject* self, PyObject* args)
 {
     double** vectors_matrix = convert_vectors(self, args);
@@ -82,6 +132,17 @@ static PyObject* symmodule(PyObject* self, PyObject* args)
     return Py_BuildValue("O", final_sym);
 }
 
+/**
+ * Perform Degree Diagonal Matrix (DDG) calculation on the given vectors.
+ *
+ * This function takes a Python list of vectors, converts it to a C array, performs the DDG calculation,
+ * and returns the resulting matrix as a Python list of lists. It handles memory allocation
+ * and deallocation for the C arrays.
+ *
+ * @param self A PyObject representing the module or class (not used).
+ * @param args A PyObject representing the arguments passed to the function.
+ * @return A PyObject representing the resulting matrix as a Python list of lists, or NULL if an error occurs.
+ */
 static PyObject* ddgmodule(PyObject* self, PyObject* args)
 {
     double** vectors_matrix = convert_vectors(self, args);
@@ -104,6 +165,17 @@ static PyObject* ddgmodule(PyObject* self, PyObject* args)
     return Py_BuildValue("O", final_ddg);
 }
 
+/**
+ * Perform Normalization on the given vectors.
+ *
+ * This function takes a Python list of vectors, converts it to a C array, performs normalization,
+ * and returns the resulting matrix as a Python list of lists. It handles memory allocation
+ * and deallocation for the C arrays.
+ *
+ * @param self A PyObject representing the module or class (not used).
+ * @param args A PyObject representing the arguments passed to the function.
+ * @return A PyObject representing the resulting matrix as a Python list of lists, or NULL if an error occurs.
+ */
 static PyObject* normmodule(PyObject* self, PyObject* args)
 {
     double** vectors_matrix = convert_vectors(self, args);
@@ -126,6 +198,17 @@ static PyObject* normmodule(PyObject* self, PyObject* args)
     return Py_BuildValue("O", final_norm);
 }
 
+/**
+ * Perform Symmetric Non-negative Matrix Factorization (SymNMF) on the given vectors.
+ *
+ * This function takes a Python list of vectors, converts it to a C array, performs SymNMF,
+ * and returns the resulting matrix as a Python list of lists. It handles memory allocation
+ * and deallocation for the C arrays.
+ *
+ * @param self A PyObject representing the module or class (not used).
+ * @param args A PyObject representing the arguments passed to the function.
+ * @return A double pointer representing the resulting matrix as a C array, or NULL if an error occurs.
+ */
 double** convert_symnmf(PyObject* self, PyObject* args)
 {
     PyObject* w_mat_obj;
@@ -168,6 +251,17 @@ double** convert_symnmf(PyObject* self, PyObject* args)
     return final_h;
 }
 
+/**
+ * Perform Symmetric Non-negative Matrix Factorization (SymNMF) on the given vectors.
+ *
+ * This function takes a Python list of vectors, converts it to a C array, performs SymNMF,
+ * and returns the resulting H matrix as a Python list of lists. It handles memory allocation
+ * and deallocation for the C arrays.
+ *
+ * @param self A PyObject representing the module or class (not used).
+ * @param args A PyObject representing the arguments passed to the function.
+ * @return A PyObject representing the resulting H matrix as a Python list of lists, or NULL if an error occurs.
+ */
 static PyObject* symnmfmodule(PyObject* self, PyObject* args)
 {    
     double** h_matrix = convert_symnmf(self, args);

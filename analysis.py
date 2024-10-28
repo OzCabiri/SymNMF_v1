@@ -7,11 +7,17 @@ import symnmf as symnmf
 from sklearn.metrics import silhouette_score
 
 """
-finds the closets centroid to a given vector and returns the index of the centroid
-@param vector: input vector in a list form
-@type X: list of lists
-@return: norm matrix
-@rtype: list of lists (size: N*N)
+Find the closest centroid to a given vector.
+
+This function calculates the Euclidean distance between the given vector and each centroid,
+and returns the index of the closest centroid.
+
+Parameters:
+vector (np.ndarray): A numpy array representing the vector.
+centroids (list of lists): A list of centroids where each centroid is a list.
+
+Returns:
+int: The index of the closest centroid.
 """
 def findClosestCentroid(vector, centroids): 
     min_distance = math.inf
@@ -25,7 +31,20 @@ def findClosestCentroid(vector, centroids):
 
     return cluster_index
 
-# Calculate kmeans labels for the vectors
+"""
+Calculate K-means labels for the given vectors.
+
+This function converts the input vectors to a numpy array, performs K-means clustering,
+and assigns each vector to the closest centroid. It returns the labels indicating the
+cluster assignment for each vector.
+
+Parameters:
+vectors (pd.DataFrame): A pandas DataFrame containing the input vectors.
+k (int): The number of clusters to form.
+
+Returns:
+list: A list of integers where each integer represents the cluster label for the corresponding vector.
+"""
 def calculateKmeansLabels(vectors, k): 
     vectors = vectors.to_numpy()  # kmeans requires numpy array
     kmeansMatrix = kmeans.doKmeans(vectors, k)
@@ -37,17 +56,19 @@ def calculateKmeansLabels(vectors, k):
 
     return kmeansLabels
 
-def findMaxInRow(matrix, row):
-    max_value = -math.inf
-    max_index = 0
+"""
+Calculate SymNMF labels for the given vectors.
 
-    for i in range(len(matrix[row])):
-        if matrix[row][i] > max_value:
-            max_value = matrix[row][i]
-            max_index = i
+This function converts the input vectors to a list of lists, performs Symmetric Non-negative Matrix Factorization (SymNMF),
+and returns the cluster assignments.
 
-    return max_index
+Parameters:
+vectors (pd.DataFrame): A pandas DataFrame containing the input vectors.
+k (int): The number of clusters to form.
 
+Returns:
+list: A list representing the cluster assignment for each vector.
+"""
 def calculateSymnmfLabels(vectors, k):
     vectors = vectors.values.tolist() # Convert data to list of lists
     symnmfMatrix = symnmf.doSymnmf(vectors, k)
@@ -59,13 +80,15 @@ def main():
         # Get data from console
         input_data = sys.argv
         k, input_file = int(input_data[1]), input_data[2]
+
         # Create Vectors dataframe from csv file
         vectors = pd.read_csv(input_file, header=None)
 
+        # Calculate kmeans sillohuette score
         kmeansLables = calculateKmeansLabels(vectors, k)
         scoreKmeans = silhouette_score(vectors, kmeansLables)
 
-        # Convert vectors to python list of lists (to use in SymNMF)
+        # Calculate symnmf sillohuette score
         symnmfLabels = calculateSymnmfLabels(vectors, k)
         scoreSymnmf = silhouette_score(vectors, symnmfLabels)
 
