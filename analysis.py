@@ -1,14 +1,50 @@
-# import math
+import math
 import sys
 import pandas as pd
 import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.decomposition import NMF
 import kmeans as kmeans
 import symnmf as symnmf
 from sklearn.metrics import silhouette_score
 
-np.random.seed(1234)
+def findClosestCentroid(vector, centroids):
+    min_distance = math.inf
+    cluster_index = 0
+
+    for j in range(len(centroids)):
+        distance = np.linalg.norm(vector - centroids[j])
+        if distance < min_distance:
+            min_distance = distance
+            cluster_index = j
+
+    return cluster_index
+
+def calculateKmeansLabels(vectors, k):
+    vectors = vectors.to_numpy()  # Convert DataFrame to numpy array
+    kmeansMatrix = kmeans.doKmeans(vectors, k)
+    kmeansLabels = [-1 for i in range(len(vectors))]
+
+    for i in range(len(vectors)):
+        clusterIndex = findClosestCentroid(vectors[i], kmeansMatrix)
+        kmeansLabels[i] = clusterIndex
+
+    return kmeansLabels
+
+def findMaxInRow(matrix, row):
+    max_value = -math.inf
+    max_index = 0
+
+    for i in range(len(matrix[row])):
+        if matrix[row][i] > max_value:
+            max_value = matrix[row][i]
+            max_index = i
+
+    return max_index
+
+def calculateSymnmfLabels(vectors, k):
+    vectors = vectors.values.tolist() # Convert data to list of lists
+    symnmfMatrix = symnmf.doSymnmf(vectors, k)
+
+    return np.array(symnmfMatrix).argmax(axis=1)
 
 def main():
     try:
@@ -18,11 +54,15 @@ def main():
         # Create Vectors dataframe from csv file
         vectors = pd.read_csv(input_file, header=None)
 
-        # calculate KMeans matrix with pandas DataFrame
-        kmeansMatrix = kmeans.doKmeans(vectors, k)
+        kmeansLables = calculateKmeansLabels(vectors, k)
+        scoreKmeans = silhouette_score(vectors, kmeansLables)
+
         # Convert vectors to python list of lists (to use in SymNMF)
-        vectors = vectors.values.tolist()
-        symnmfMatrix = symnmf.doSymnmf(vectors, k) # The SymNMF matrix        
+        symnmfLabels = calculateSymnmfLabels(vectors, k)
+        scoreSymnmf = silhouette_score(vectors, symnmfLabels)
+
+        print("nmf: " + format(scoreSymnmf, ".4f"))
+        print("kmeans: " + format(scoreKmeans, ".4f"))
 
     except Exception:
         print("An Error Has Occurred")

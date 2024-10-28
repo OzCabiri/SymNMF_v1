@@ -32,13 +32,12 @@ def updateCentroidAndConvergence(centroids, clusters):
         else:
             new_centroid = np.zeros(len(centroids[0]))
 
-        if np.linalg.norm(new_centroid - centroids[i]) >= 0.001:
+        if np.linalg.norm(new_centroid - centroids[i]) >= 0.0001:
             convergence = False
         centroids[i] = new_centroid
     return convergence
 
 def doKmeans(vectors, k):
-    vectors = vectors.to_numpy()  # Convert DataFrame to numpy array
     centroids = vectors[:k].copy() # Choose first k vectors as initial centroids
 
     for i in range(300):
