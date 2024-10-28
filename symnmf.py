@@ -32,18 +32,17 @@ def main():
         matrix_goal = None # The matrix to calculate and return
 
         # Choose which matrix to calculate and return
-        match goal:
-            case "sym":
-                matrix_goal = SymNMF.sym(vectors) # Calling sym function in C to calculate the matrix
-            case "ddg":
-                matrix_goal = SymNMF.ddg(vectors) # Calling ddg function in C to calculate the matrix
-            case "norm":
-                matrix_goal = SymNMF.norm(vectors) # Calling norm function in C to calculate the matrix
-            case "symnmf":
-                matrix_goal = doSymnmf(vectors, k)
-            case _:
-                print("An Error Has Occurred")
-                return
+        if goal == "sym":
+            matrix_goal = SymNMF.sym(vectors) # Calling sym function in C to calculate the matrix
+        elif goal == "ddg":
+            matrix_goal = SymNMF.ddg(vectors) # Calling ddg function in C to calculate the matrix
+        elif goal == "norm":
+            matrix_goal = SymNMF.norm(vectors) # Calling norm function in C to calculate the matrix  
+        elif goal == "symnmf":
+            matrix_goal = doSymnmf(vectors, k)
+        else:
+            print("An Error Has Occurred")
+            return
 
         # print matrix_goal until 4 decimal points
         for row in matrix_goal:

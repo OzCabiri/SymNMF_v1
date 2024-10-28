@@ -6,7 +6,14 @@ import kmeans as kmeans
 import symnmf as symnmf
 from sklearn.metrics import silhouette_score
 
-def findClosestCentroid(vector, centroids):
+"""
+finds the closets centroid to a given vector and returns the index of the centroid
+@param vector: input vector in a list form
+@type X: list of lists
+@return: norm matrix
+@rtype: list of lists (size: N*N)
+"""
+def findClosestCentroid(vector, centroids): 
     min_distance = math.inf
     cluster_index = 0
 
@@ -18,8 +25,9 @@ def findClosestCentroid(vector, centroids):
 
     return cluster_index
 
-def calculateKmeansLabels(vectors, k):
-    vectors = vectors.to_numpy()  # Convert DataFrame to numpy array
+# Calculate kmeans labels for the vectors
+def calculateKmeansLabels(vectors, k): 
+    vectors = vectors.to_numpy()  # kmeans requires numpy array
     kmeansMatrix = kmeans.doKmeans(vectors, k)
     kmeansLabels = [-1 for i in range(len(vectors))]
 

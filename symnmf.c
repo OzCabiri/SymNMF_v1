@@ -341,6 +341,28 @@ double** symnmf(double** W, double** H, int N, int k)
     return new_H;
 }
 
+char* duplicateString(char* src)
+{
+    char* str;
+    char* p;
+    int len = 0;
+
+    if(src == NULL)
+    {
+        printf("An error has occured");
+        return NULL;
+    }
+    
+    while (src[len])
+        len++;
+    str = malloc(len + 1);
+    p = str;
+    while (*src)
+        *p++ = *src++;
+    *p = '\0';
+    return str;
+}
+
 double** read_vectors_from_file(const char *filename)
 {
     char line[MAX_LINE_LENGTH];
@@ -362,7 +384,7 @@ double** read_vectors_from_file(const char *filename)
 
         /* Count columns in the first row */
         if (row_count == 1) {
-            char* temp = strdup(line);  /* Duplicate line for counting columns */
+            char* temp = duplicateString(line);  /* Duplicate line for counting columns */
             char* token = strtok(temp, ",");
             while (token != NULL) {
                 col_count++;
@@ -395,41 +417,41 @@ double** read_vectors_from_file(const char *filename)
     return matrix;
 }
 
-
 int main(int argc, char* argv[])
 {
     double** vectors;
-    double** goal_matrix;
+    double** goal_matrix = NULL;
 
-    const char* goal = strdup(argv[1]);
-    const char* filename = strdup(argv[2]);
+    char* goal = duplicateString(argv[1]);
+    char* filename = duplicateString(argv[2]);
 
     (void)argc;
 
     vectors = read_vectors_from_file(filename);
-    if(vectors == NULL) return 1;
+    if(vectors == NULL) 
+    {
+        free(goal);
+        free(filename);
+        return 1;
+    }
     
     if(!strcmp(goal,"sym"))
     {
         goal_matrix = sym(vectors, N_c, vecdim_c);
-        print_matrix(goal_matrix, N_c, N_c);
-        matrix_free(goal_matrix, N_c);
-        matrix_free(vectors, N_c);
     }
     else if(!strcmp(goal,"ddg"))
     {
-        double** goal_matrix = ddg(vectors, N_c, vecdim_c);
-        print_matrix(goal_matrix, N_c, N_c);
-        matrix_free(goal_matrix, N_c);
-        matrix_free(vectors, N_c);
+        goal_matrix = ddg(vectors, N_c, vecdim_c);
     }
     else if(!strcmp(goal,"norm"))
     {
-        double** goal_matrix = norm(vectors, N_c, vecdim_c);
-        print_matrix(goal_matrix, N_c, N_c);
-        matrix_free(goal_matrix, N_c);
-        matrix_free(vectors, N_c);
+        goal_matrix = norm(vectors, N_c, vecdim_c);
     }
+    print_matrix(goal_matrix, N_c, N_c);
+    matrix_free(goal_matrix, N_c);
+    matrix_free(vectors, N_c);
+    free(goal);
+    free(filename);
     
     return 0;
 }

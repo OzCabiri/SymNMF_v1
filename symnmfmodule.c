@@ -42,7 +42,7 @@ PyObject* convert_carray2pylist(double** received_matrix, int n, int m)
 double** convert_vectors(PyObject* self, PyObject* args)
 {
     PyObject* vec_arr_obj;
-    double** vec_arr;
+    double** vec_arr = NULL;
     
     /* Parse Python argument: */
     if(!PyArg_ParseTuple(args, "O", &vec_arr_obj)) return NULL; /* In the CPython API, a NULL value is never valid for a
@@ -130,10 +130,8 @@ double** convert_symnmf(PyObject* self, PyObject* args)
 {
     PyObject* w_mat_obj;
     PyObject* h_mat_obj;
-    double** w_mat;
-    double** h_mat;
-    int iter;
-    double eps;
+    double** w_mat = NULL;
+    double** h_mat = NULL;
     
     /* Parse Python arguments: */
     if(!PyArg_ParseTuple(args, "OOi", &w_mat_obj, &h_mat_obj, &k)) return NULL; /* In the CPython API, a NULL value is never valid for a
