@@ -6,6 +6,13 @@
 
 static int N_c, vecdim_c;
 
+/* 
+prints a matrix of doubles with dimensions n*m
+@param matrix: the matrix to be printed
+@param n: the number of rows
+@param m: the number of columns
+@return void
+*/
 void print_matrix(double** matrix, int n, int m)
 {
     int i,j;
@@ -23,6 +30,12 @@ void print_matrix(double** matrix, int n, int m)
     }
 }   
 
+/*
+frees a matrix of doubles with dimensions n*m
+@param p: the matrix to be freed
+@param n: the number of rows
+@return void
+*/
 void matrix_free(double** p, int n)
 {
     int i;
@@ -33,6 +46,13 @@ void matrix_free(double** p, int n)
     free(p); 
 }
 
+/*
+allocates memory for a matrix of doubles with dimensions n*m
+@param new_matrix: the matrix to be allocated
+@param n: the number of rows
+@param m: the number of columns
+@return double**: the allocated matrix
+*/
 double** matrix_malloc(double** new_matrix, int n, int m)
 {
     int i;
@@ -54,6 +74,15 @@ double** matrix_malloc(double** new_matrix, int n, int m)
     return new_matrix;
 }
 
+/*
+multiplies two matrices of doubles
+@param matrix1: the first matrix
+@param matrix2: the second matrix
+@param n: the number of rows of the first matrix
+@param m: the number of columns of the first matrix and the number of rows of the second matrix
+@param p: the number of columns of the second matrix
+@return double**: the result matrix
+*/
 double** matrix_multiplication(double** matrix1, double** matrix2, int n, int m, int p)
 {
     int i,j,k;
@@ -77,6 +106,13 @@ double** matrix_multiplication(double** matrix1, double** matrix2, int n, int m,
     return result_matrix;
 }
 
+/*
+transposes a matrix of doubles
+@param matrix: the matrix to be transposed
+@param n: the number of rows
+@param m: the number of columns
+@return double**: the transposed matrix
+*/
 double** matrix_transpose(double** matrix, int n, int m)
 {
     int i,j;
@@ -95,6 +131,14 @@ double** matrix_transpose(double** matrix, int n, int m)
     return transposed_matrix;
 }
 
+/*
+substracts two matrices of doubles
+@param matrix1: the first matrix
+@param matrix2: the second matrix
+@param n: the number of rows
+@param m: the number of columns
+@return double**: the result matrix
+*/
 double** matrix_substraction(double** matrix1, double** matrix2, int n, int m)
 {
     int i,j;
@@ -113,7 +157,17 @@ double** matrix_substraction(double** matrix1, double** matrix2, int n, int m)
     return result_matrix;
 }
 
-void update_new_H(double** new_H,double** H, double** nom_matrix, double** denom_matrix, int N, int k)
+/*
+performs the update step of the symnmf algorithm by using the recursive formula
+@param new_H: the new H matrix
+@param H: the old H matrix
+@param nom_matrix: the numerator matrix
+@param denom_matrix: the denominator matrix
+@param N: the number of rows
+@param k: the number of columns
+@return void
+*/
+void update_new_H(double** new_H, double** H, double** nom_matrix, double** denom_matrix, int N, int k)
 {
     int i,j;
     double beta = 0.5;
@@ -126,6 +180,14 @@ void update_new_H(double** new_H,double** H, double** nom_matrix, double** denom
         }
 }
 
+/*
+swiches the old H matrix with the new H matrix
+@param H: the old H matrix
+@param new_H: the new H matrix
+@param N: the number of rows
+@param k: the number of columns
+@return void
+*/
 void advance_H(double** H, double** new_H, int N, int k)
 {
     int i,j;
@@ -138,6 +200,14 @@ void advance_H(double** H, double** new_H, int N, int k)
     }
 }
 
+/*
+calculates the forbius norm of a matrix of doubles
+@param matrix: the matrix
+@param n: the number of rows
+@param m: the number of columns
+@param is_squared: a flag to determine if the squared norm should be returned
+@return double: the forbius norm
+*/
 double forbius_norm(double** matrix, int n, int m, int is_squared)
 {
     int i,j;
@@ -152,6 +222,14 @@ double forbius_norm(double** matrix, int n, int m, int is_squared)
     return (is_squared == 0) ? sqrt(sum) : sum;
 }
 
+/*
+checks the convergence of two matrices of doubles by calculating the forbius norm of their difference
+@param matrix1: the first matrix
+@param matrix2: the second matrix
+@param n: the number of rows
+@param m: the number of columns
+@return double: the forbius norm of the difference
+*/
 double matrix_convergence(double** matrix1, double** matrix2, int n, int m)
 {
     double** result_matrix = matrix_substraction(matrix1, matrix2, n, m);
@@ -161,6 +239,14 @@ double matrix_convergence(double** matrix1, double** matrix2, int n, int m)
     return norm;
 }
 
+/*
+calculates the euclidean distance between two vectors of doubles
+@param vec1: the first vector
+@param vec2: the second vector
+@param vecdim: the number of dimensions
+@param is_squared: a flag to determine if the squared distance should be returned
+@return double: the euclidean distance
+*/
 double euclidean_distance(double* vec1, double* vec2, int vecdim, int is_squared)
 {
     int i;
@@ -172,6 +258,13 @@ double euclidean_distance(double* vec1, double* vec2, int vecdim, int is_squared
     return (is_squared==0) ? sqrt(sum) : sum;
 }
 
+/*
+calculates the symilarity matrix of a matrix of doubles
+@param vectors: the matrix of vectors
+@param N: the number of rows
+@param vecdim: the number of dimensions
+@return double**: the symilarity matrix
+*/
 double** sym(double** vectors, int N, int vecdim)
 {
     int i,j;
@@ -204,6 +297,13 @@ double** sym(double** vectors, int N, int vecdim)
     return sym_matrix;
 }
 
+/*
+calculates the ddg matrix of a matrix of doubles
+@param vectors: the matrix of vectors
+@param N: the number of rows
+@param vecdim: the number of dimensions
+@return double**: the ddg matrix
+*/
 double** ddg(double** vectors, int N, int vecdim)
 {
     int i,j;
@@ -244,6 +344,13 @@ double** ddg(double** vectors, int N, int vecdim)
     return ddg_matrix;
 }
 
+/*
+calculates the norm matrix of a matrix of doubles
+@param vectors: the matrix of vectors
+@param N: the number of rows
+@param vecdim: the number of dimensions
+@return double**: the norm matrix
+*/
 double** norm(double** vectors, int N, int vecdim)
 {
     int i,j;
@@ -281,6 +388,16 @@ double** norm(double** vectors, int N, int vecdim)
     return norm_matrix;
 }
 
+/*
+calculates the symnmf matrix of a matrix of doubles using norm and H matrices
+check the convergence of the H matrix and updates it until convergence is reached for epsilon = 0.0001
+or until 300 iterations are reached
+@param W: the norm matrix
+@param H: the H matrix
+@param N: the number of rows
+@param k: the number of columns
+@return double**: the symnmf matrix
+*/
 double** symnmf(double** W, double** H, int N, int k)
 {
     int i;
@@ -341,6 +458,11 @@ double** symnmf(double** W, double** H, int N, int k)
     return new_H;
 }
 
+/*
+function to duplicate a string
+@param src: the string to be duplicated
+@return char*: the duplicated string
+ */
 char* duplicateString(char* src)
 {
     char* str;
@@ -363,6 +485,11 @@ char* duplicateString(char* src)
     return str;
 }
 
+/*
+read vectors from a file and store them in a matrix of doubles
+@param filename: the name of the file
+@return double**: the matrix of vectors
+*/
 double** read_vectors_from_file(const char *filename)
 {
     char line[MAX_LINE_LENGTH];
