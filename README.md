@@ -69,8 +69,6 @@ In order to run this project you will need to compile it on your machine.
 
 ## Usage
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
 ### Using the Python interface:
 The Python interface recieves 3 arguemtns: _k_, _goal_ and an _input file_.
 * _k_ is the number of clusters
